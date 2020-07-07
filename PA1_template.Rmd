@@ -1,25 +1,64 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
+author: "Shivani R"
 output: 
-  html_document:
-    keep_md: true
+html_document:
+keep_md: true
 ---
 
 
 ## Loading and preprocessing the data
+```{r packages ,echo=FALSE}
+library(knitr)
+library(ggplot2)
+library(dplyr)
 
+data1 <- read.csv("activity.csv") 
+data <- data1[ with (data1, { !(is.na(steps)) } ), ]
+```
 
 
 ## What is mean total number of steps taken per day?
-
+```{r}
+x<-group_by(data,date)
+y<-summarise(x,total=sum(steps))
+hist(y$total, main=" total number of steps per day", 
+     xlab="Total number of steps in a day")
+```
 
 
 ## What is the average daily activity pattern?
-
+```{r}
+m<-aggregate(steps~interval,data,mean)
+plot(m$interval,m$steps,type="l",main="Average daily activity pattern")
+```
 
 
 ## Imputing missing values
+```{r}
+s<-sum(is.na(data1))
 
+data2<-data1
+data2[is.na(data$steps)]<-mean(data2$steps,na.rm=TRUE)
+m1<-aggregate(steps~date,data2,sum)
 
-
+hist(m1$steps, main=" total number of steps per day", 
+     xlab="Total number of steps in a day")
+summary(m1)
+```
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+
+data2['day']<-weekdays(as.Date(data2$date))
+data2$day[data2$day %in% c("Saturday","Sunday")]<-"Weekend"
+data2$day[data2$day!="Weekend"]<-"Weekday"
+data2$day<-as.factor(data2$day)
+d<-aggregate(steps~interval+day,data2,mean)
+par(mfrow=c(1,2) ,mar=c(4,2,2,1))
+
+ggplot(d, aes(x =interval , y=steps, color=day)) +
+  geom_line() +
+  labs(title = "Average Daily Steps (day)", x = "Interval", y = "Total Number of Steps") +
+  facet_wrap(~ day, ncol = 1, nrow=2)
+```
+
